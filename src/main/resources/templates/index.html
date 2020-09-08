@@ -1,0 +1,140 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.thymeleaf.org ">
+
+<head>
+
+    <div th:replace="/commonFragment :: myheader"></div>
+    <style>
+    tr {
+        cursor: pointer;
+    }
+
+     table#stationstable tr td:first-child, table#stationstable tr th:first-child  {
+            display: none;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div th:replace="/commonFragment :: navbar"></div>
+
+    <main role="main">
+
+        <div class="container mt-5">
+            <div class="row">
+                <div class="col">
+                    <form>
+                        <div class="row input-daterange">
+                            <div class="col-md-4">
+                                <input type="text" class="form-control date-picker" placeholder="Start Date" id="startDate" readonly/>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control date-picker" placeholder="End Date" id="endDate" readonly/>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="button" class="btn btn-primary" id="filterresults">Filter</button>
+                                <button type="button" class="btn btn-primary" id="resetresults">Reset</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col">
+                    <table id="stationstable" data-toggle="table" style="height: 100%"
+                           data-ajax="ajaxRequest" data-search="false"
+                           data-side-pagination="server" data-pagination="true">
+                        <thead>
+                        <tr>
+                            <th data-field="stationId">ID</th>
+                            <th data-field="stationName">Station_Name</th>
+                            <th data-field="weatherDate">Date</th>
+                            <th data-field="meanTemp">Mean_Temp</th>
+                        </tr>
+                        </thead>
+                    </table>
+
+                    <script>
+                        var filterStartDate;
+                        var filterEndDate;
+
+
+                        /**
+                        Handles the request to load paginated stations.   Pagination happens at server side.
+                        Formats request and response into the format expected by Bootstrap Tables
+                        **/
+                        function ajaxRequest(params) {
+
+                            var size = params.data.limit;
+                            var page = params.data.offset / size;
+
+                            var url = '/weatherInfo'+ '?page=' + page + '&size=' + size;
+
+                            if(filterStartDate) {
+                                url = url +'&startDate=' + filterStartDate;
+                            }
+
+                            if(filterEndDate) {
+                                url = url +'&endDate=' + filterEndDate;
+                            }
+
+                            $.get(url).then(
+                                function(res) {
+                                    var tableData = {
+                                        rows : res.content,
+                                        total : res.totalElements,
+                                        totalNotFiltered : res.totalElements
+                                    };
+                                    params.success(tableData)
+
+                                    $('.table > tbody > tr').click(function() {
+                                        var stationId = $(this).find("td:first").text();
+                                        var stationName = $(this).find("td:eq(1)").text();
+                                        window.location.href = '/stations/' + stationId + '/' + stationName;
+                                    });
+                                })
+                        }
+
+                        $(function() {
+                            $('.input-daterange').datepicker({
+                                todayBtn:'linked',
+                                format: 'yyyy-mm-dd',
+                                autoclose:true
+                            });
+
+                            $('#filterresults').on('click', function() {
+                                filterStartDate = $('#startDate').val();
+                                filterEndDate = $('#endDate').val();
+
+                                if(filterStartDate && filterEndDate) {
+                                    var startDate = new Date(filterStartDate+'T00:00:00');
+                                    var endDate = new Date(filterEndDate+'T00:00:00');
+
+                                    if(endDate < startDate) {
+                                        alert('The filter end date needs to be after ['+filterStartDate+']')
+                                        return true;
+                                    }
+                                }
+
+                                $('#stationstable').bootstrapTable('refresh');
+                                return true;
+                            });
+
+                            $('#resetresults').on('click', function() {
+                                $('#startDate').val('');
+                                $('#endDate').val('');
+                                filterStartDate='';
+                                filterEndDate='';
+                                $('#stationstable').bootstrapTable('refresh');
+                                return true;
+                            });
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
