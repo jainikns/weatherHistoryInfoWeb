@@ -4,10 +4,10 @@ Description :
 1) Web page can display weather basic information and user can find specific weather date data by filtering on start date and end date
 2) Upon clicking row user can find detail information about station
 
-###Install dependency and generate package
+###Install dependency and generate package \
 mvn clean package
 
-###Run Spring Boot application from command line
+###Run Spring Boot application from command line \
 cd WeatherInfo \
 mvn spring-boot:run
 
